@@ -25,6 +25,10 @@ public class Gun : MonoBehaviour
 
         if (ARAVRInput.GetDown(ARAVRInput.Button.IndexTrigger))
         {
+            // 컨트롤러 진동 재생
+            ARAVRInput.PlayVibration(ARAVRInput.Controller.RTouch);
+
+            // 총 발사 사운드 재생
             bulletAudio.Stop();
             bulletAudio.Play();
 
