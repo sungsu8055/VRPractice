@@ -1,57 +1,126 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class GrabObject : MonoBehaviour
 {
-    // ¹°Ã¼¸¦ Àâ¾Ò´ÂÁö ¿©ºÎ
+    // ë¬¼ì²´ë¥¼ ì¡ì•˜ëŠ”ì§€ ì—¬ë¶€
     bool isGrabbing = false;
-    // Àâ°í ÀÖ´Â ¹°
+    // ì¡ê³  ìˆëŠ” ë¬¼ì²´
     GameObject grabbedObject;
-    // ÀâÀ» ¹°Ã¼ Á¾·ù
+    // ì¡ì„ ë¬¼ì²´ ì¢…ë¥˜
     public LayerMask grabbedLayer;
-    // ÀâÀ» ¼ö ÀÖ´Â °Å¸®
+    // ì¡ì„ ìˆ˜ ìˆëŠ” ê±°ë¦¬
     public float grabRange = 0.2f;
+
+    // ë¬¼ì²´ ë˜ì§€ê¸°
+    // ì´ì „ ìœ„ì¹˜
+    Vector3 prevRHandPos;
+    // ë˜ì§€ëŠ” í˜
+    float throwPower = 10;
+
+    // ê°ì†ë„ ì ìš©
+    // ì´ì „ íšŒì „
+    Quaternion prevRHandRot;
+    // íšŒì „ë ¥
+    public float torPower = 5;
 
     void Start()
     {
-        
+
     }
 
     void Update()
     {
-        // Àâ°í ÀÖÁö ¾Ê´Â »óÅÂÀÏ ¶§ Àâ±â ½Ãµµ
+        // ì¡ê³  ìˆì§€ ì•ŠëŠ” ìƒíƒœì¼ ë•Œ ì¡ê¸° ì‹œë„
         if (isGrabbing == false)
         {
             TryGrab();
+        }
+        else
+        {
+            TryUngrab();
         }
     }
 
     void TryGrab()
     {
-        // Grab ¹öÆ°À» ´©¸£¸é
-        if(ARAVRInput.GetDown(ARAVRInput.Button.HandTrigger, ARAVRInput.Controller.RTouch))
+        // Grab ë²„íŠ¼ì„ ëˆ„ë¥´ë©´
+        if (ARAVRInput.GetDown(ARAVRInput.Button.HandTrigger, ARAVRInput.Controller.RTouch))
         {
-            // ÀÏÁ¤ ¿µ¿ª ¾È¿¡ ÆøÅºÀÌ ÀÖÀ» ¶§
+            // ì¼ì • ì˜ì—­ ì•ˆì— í­íƒ„ì´ ìˆì„ ë•Œ
             Collider[] hitObjects = Physics.OverlapSphere(ARAVRInput.RHandPosition, grabRange, grabbedLayer);
-            // ÆøÅºÀ» Àâ´Â´Ù
+            // í­íƒ„ì„ ì¡ëŠ”ë‹¤
             int closest = 0;
-            // ¼Õ°ú °¡Àå °¡±î¿î ¹°Ã¼ ¼±ÅÃ
+            // ì†ê³¼ ê°€ì¥ ê°€ê¹Œìš´ ë¬¼ì²´ ì„ íƒ
             for (int i = 1; i < hitObjects.Length; i++)
             {
-                // °¡Àå °¡±î¿î ¹°Ã¼¿Í ¼ÕÀÇ °Å¸®
+                // ê°€ì¥ ê°€ê¹Œìš´ ë¬¼ì²´ì™€ ì†ì˜ ê±°ë¦¬
                 Vector3 closestPos = hitObjects[closest].transform.position;
                 float closestDistance = Vector3.Distance(closestPos, ARAVRInput.RHandPosition);
-                // ´ÙÀ½ ¹°Ã¼¿Í ¼ÕÀÇ °Å¸®
+                // ë‹¤ìŒ ë¬¼ì²´ì™€ ì†ì˜ ê±°ë¦¬
                 Vector3 nextPos = hitObjects[i].transform.position;
                 float nextDistance = Vector3.Distance(nextPos, ARAVRInput.RHandPosition);
-                // ´ÙÀ½ ¹°Ã¼¿ÍÀÇ °Å¸®°¡ ´õ °¡±î¿ì¸é ÀÎµ¦½º ±³Ã¼
-                if(nextDistance < closestDistance)
+                // ë‹¤ìŒ ë¬¼ì²´ì™€ì˜ ê±°ë¦¬ê°€ ë” ê°€ê¹Œìš°ë©´ ì¸ë±ìŠ¤ êµì²´
+                if (nextDistance < closestDistance)
                 {
                     closest = i;
                 }
             }
-        }
+            // ê²€ì¶œ ë¬¼ì²´ ìˆìœ¼ë©´
+            if (hitObjects.Length > 0)
+            {
+                // ê·¸ë© ìƒíƒœ íŠ¸ë£¨ë¡œ ë³€ê²½
+                isGrabbing = true;
+                // ê°€ì¥ ê°€ê¹Œìš´ ì¡ì„ ë¬¼ì²´ ì €ì¥
+                grabbedObject = hitObjects[closest].gameObject;
+                // ì¡ì€ ë¬¼ì²´ë¥¼ ì†ì˜ ìì‹ìœ¼ë¡œ ë“±ë¡
+                grabbedObject.transform.parent = ARAVRInput.RHand;
+                // ë¬¼ë¦¬ ê¸°ëŠ¥ ì •ì§€
+                grabbedObject.GetComponent<Rigidbody>().isKinematic = true;
 
+                // ë˜ì§€ê¸° ì´ì „ ìœ„ì¹˜ ì´ˆê¸°ê°’ ì§€ì •
+                prevRHandPos = ARAVRInput.RHandPosition;
+                // ë˜ì§€ê¸° ì´ì „ íšŒì „ ì´ˆê¸°ê°’ ì§€ì •
+                prevRHandRot = ARAVRInput.RHand.rotation;
+            }
+        }
+    }
+
+    void TryUngrab()
+    {
+        // ë˜ì ¸ì§ˆ ë°©í–¥
+        Vector3 throwDirection = (ARAVRInput.RHandPosition - prevRHandPos);
+        // ìœ„ì¹˜ê°’ ê°±ì‹ 
+        prevRHandPos = ARAVRInput.RHandPosition;
+        // ì¿¼í„°ë‹ˆì˜¨ ì°¨ êµ¬í•˜ê¸° ê³µì‹
+        // angle1 = Q1, angle2= Q2
+        // angle1 + angle2 = Q1 * Q2
+        // -angle2 = Quaternion.Inverse(Q2)
+        // angle2 - angle1 = Quaternion.FromToRotation(Q1, Q2) = Q2 * Quaternion.Inverse(Q1)
+        // íšŒì „ ë°©í–¥ = current - prev, -prevëŠ” Inverseë¡œ êµ¬í•¨
+        Quaternion deltaRotation = ARAVRInput.RHand.rotation * Quaternion.Inverse(prevRHandRot);
+        // ì´ì „ íšŒì „
+        prevRHandRot = ARAVRInput.RHand.rotation;
+
+        if (ARAVRInput.GetUp(ARAVRInput.Button.HandTrigger, ARAVRInput.Controller.RTouch))
+        {
+            // ì¡ê¸° ìƒíƒœ falseë¡œ ì „í™˜
+            isGrabbing = false;
+            // ë¬¼ë¦¬ ê¸°ëŠ¥ í™œì„±í™”
+            grabbedObject.GetComponent<Rigidbody>().isKinematic = false;
+            // ì†ì—ì„œ í­íƒ„ ë–¼ì–´ë‚´ê¸°, ë¶€ëª¨ ìì‹ ê´€ê³„ ë¹„í™œì„±
+            grabbedObject.transform.parent = null;
+            // ë˜ì§€ê¸°
+            grabbedObject.GetComponent<Rigidbody>().velocity = throwDirection * throwPower;
+            // ê°ì†ë„ = (1/dt) * d0(íŠ¹ì • ì¶• ê¸°ì¤€ ë³€ìœ„ ê°ë„)
+            float angle;
+            Vector3 axis;
+            deltaRotation.ToAngleAxis(out angle, out axis);
+            Vector3 angularVelocity = (1.0f / Time.deltaTime) * angle * axis;
+            grabbedObject.GetComponent<Rigidbody>().angularVelocity = angularVelocity;
+            // ì¡ì€ ë¬¼ì²´ ì •ë³´ ì‚­ì œ
+            grabbedObject = null;
+        }
     }
 }
