@@ -59,7 +59,7 @@ public class Tower : MonoBehaviour
         // 카메라의 nearClipPlane 값을 저장 (0.01 값 설정 시 카메라 near 보다 뒤에 배치됨, 0.25로 설정 하면 해결)
         float z = Camera.main.nearClipPlane + cameraNearOffset;
         // damageUI 객체의 부모를 카메라로 설정
-        damageUI.parent = Camera.main.transform;
+        damageUI.SetParent(Camera.main.transform);  // transform의 parent 설정이 아닌 SetParent 함수 사용(로컬위치, 배율등의 UI크기 문제 해결됨)
         // damageUI의 위치 값을 xy는 0, z값은 카메라의 near 값으로 설정
         damageUI.localPosition = new Vector3(0, 0, z);
         // damageImage는 보이지 않도록 초기에 비활성화
